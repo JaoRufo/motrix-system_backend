@@ -205,7 +205,7 @@ Authorization: Bearer {token}
     {
       "placa": "ABC-1234",
       "modelo": "Fiat Uno",
-      "ano": "2020",
+      "ano": "2000",
       "cor": "Branco",
       "km_atual": 50000
     }
