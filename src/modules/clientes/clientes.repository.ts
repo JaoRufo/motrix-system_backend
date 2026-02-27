@@ -70,7 +70,7 @@ export const clienteRepository = {
           `INSERT INTO veiculos (cliente_id, placa, modelo, ano, chassi, cor, km_atual, created_at, updated_at) 
            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
            RETURNING *`,
-          [clienteCriado.id, veiculo.placa.toUpperCase(), veiculo.modelo, veiculo.ano, veiculo.chassi, veiculo.cor, veiculo.km_atual || 0]
+          [clienteCriado.id, veiculo.placa.toUpperCase(), veiculo.modelo, veiculo.ano, veiculo.chassi?.toUpperCase(), veiculo.cor, veiculo.km_atual || 0]
         );
         veiculosCriados.push(veiculoResult.rows[0]);
       }

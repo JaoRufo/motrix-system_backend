@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middlewares/auth.middleware';
 import { ordemService } from './ordens.service';
 import { validationResult } from 'express-validator';
+import { generateOrdemPDF } from '../../utils/pdf';
+import { pool } from '../../config/database';
 
 export const ordemController = {
   async getAll(req: AuthRequest, res: Response) {
@@ -69,6 +71,27 @@ export const ordemController = {
       const id = parseInt(req.params.id!);
       const result = await ordemService.delete(id);
       res.json(result);
+    } catch (error: any) {
+      res.status(404).json({ error: error.message });
+    }
+  },
+
+  async downloadPDF(req: AuthRequest, res: Response) {
+    try {
+      const id = parseInt(req.params.id!);
+      const ordem = await ordemService.getById(id);
+      
+      const clienteResult = await pool.query('SELECT nome, telefone FROM clientes WHERE id = $1', [ordem.cliente_id]);
+      const veiculoResult = await pool.query('SELECT modelo FROM veiculos WHERE id = $1', [ordem.veiculo_id]);
+      
+      const ordemCompleta = {
+        ...ordem,
+        cliente_nome: clienteResult.rows[0]?.nome,
+        cliente_telefone: clienteResult.rows[0]?.telefone,
+        veiculo_modelo: veiculoResult.rows[0]?.modelo
+      };
+
+      generateOrdemPDF(ordemCompleta, res);
     } catch (error: any) {
       res.status(404).json({ error: error.message });
     }

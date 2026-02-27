@@ -41,4 +41,6 @@ router.put(
 
 router.delete('/:id', isAuthenticated, isActive, ordemController.delete);
 
+router.get('/:id/pdf', isAuthenticated, isActive, ordemController.downloadPDF);
+
 export default router;
