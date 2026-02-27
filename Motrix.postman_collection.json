@@ -1,0 +1,261 @@
+{
+  "info": {
+    "name": "Motrix Backend API",
+    "description": "Coleção completa de endpoints do sistema Motrix",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Novo Usuário\",\n  \"username\": \"usuario\",\n  \"email\": \"usuario@motrix.com\",\n  \"senha\": \"senha123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuários",
+      "item": [
+        {
+          "name": "Listar Usuários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["usuarios"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Usuário",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["usuarios", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar Usuário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"João Silva\",\n  \"username\": \"joao\",\n  \"email\": \"joao@motrix.com\",\n  \"senha\": \"senha123\",\n  \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["usuarios"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar Clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes"]
+            }
+          }
+        },
+        {
+          "name": "Criar Cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": {\n    \"nome\": \"João Silva\",\n    \"cpf\": \"123.456.789-00\",\n    \"telefone\": \"(11) 98765-4321\",\n    \"email\": \"joao@email.com\",\n    \"endereco\": \"Rua ABC, 123\"\n  },\n  \"veiculos\": [\n    {\n      \"placa\": \"ABC-1234\",\n      \"modelo\": \"Fiat Uno\",\n      \"ano\": \"2020\",\n      \"cor\": \"Branco\",\n      \"km_atual\": 50000\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes"]
+            }
+          }
+        },
+        {
+          "name": "Histórico do Cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/1/historico",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes", "1", "historico"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ordens de Serviço",
+      "item": [
+        {
+          "name": "Listar Ordens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ordens",
+              "host": ["{{baseUrl}}"],
+              "path": ["ordens"]
+            }
+          }
+        },
+        {
+          "name": "Criar Ordem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ordem\": {\n    \"cliente_id\": 1,\n    \"veiculo_id\": 1,\n    \"veiculo_placa\": \"ABC-1234\",\n    \"km_atual\": 51000,\n    \"status\": \"Aberta\",\n    \"descricao_problema\": \"Troca de óleo e filtros\",\n    \"observacoes\": \"Cliente solicitou revisão completa\"\n  },\n  \"pecas\": [\n    {\n      \"nome\": \"Óleo 5W30\",\n      \"valor\": 150.00\n    },\n    {\n      \"nome\": \"Filtro de óleo\",\n      \"valor\": 45.00\n    }\n  ],\n  \"maoObra\": [\n    {\n      \"descricao\": \"Troca de óleo\",\n      \"valor\": 80.00\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ordens",
+              "host": ["{{baseUrl}}"],
+              "path": ["ordens"]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Placa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ordens/veiculo/ABC-1234",
+              "host": ["{{baseUrl}}"],
+              "path": ["ordens", "veiculo", "ABC-1234"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+# ===============================
+# Variáveis de Ambiente
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Node
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# ===============================
+# Build / TypeScript
+# ===============================
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# ===============================
+# Testes
+# ===============================
+coverage/
+.nyc_output/
+
+# ===============================
+# Banco de Dados
+# ===============================
+*.sql.backup
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# ===============================
+# Logs
+# ===============================
+logs/
+*.log
+*.out
+*.err
+
+# ===============================
+# Sistema Operacional
+# ===============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===============================
+# IDE / Editor
+# ===============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===============================
+# Docker (caso use depois)
+# ===============================
+docker-compose.override.yml
+
+# ===============================
+# Arquivos Sensíveis Extras
+# ===============================
+*.pem
+*.key
+*.crt
+*.cert
+
+# ===============================
+# Uploads (se implementar depois)
+# ===============================
+uploads/
+public/uploads/
+
+# ===============================
+# Cache
+# ===============================
+.cache/
+.tmp/
+temp/
