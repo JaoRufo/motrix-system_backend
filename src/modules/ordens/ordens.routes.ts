@@ -20,6 +20,7 @@ router.post(
     body('ordem.km_atual').isInt().withMessage('KM atual é obrigatório'),
     body('ordem.status').isIn(['Aberta', 'Em Andamento', 'Aguardando Orçamento', 'Finalizada', 'Cancelada']).withMessage('Status inválido'),
     body('ordem.descricao_problema').notEmpty().withMessage('Descrição do problema é obrigatória'),
+    body('ordem.mecanico_id').optional().isInt().withMessage('Mecânico ID deve ser um número'),
     body('pecas').isArray().withMessage('Peças deve ser um array'),
     body('maoObra').isArray().withMessage('Mão de obra deve ser um array')
   ],
@@ -33,6 +34,7 @@ router.put(
   [
     body('ordem.status').optional().isIn(['Aberta', 'Em Andamento', 'Aguardando Orçamento', 'Finalizada', 'Cancelada']).withMessage('Status inválido'),
     body('ordem.km_atual').optional().isInt().withMessage('KM atual deve ser um número'),
+    body('ordem.mecanico_id').optional().isInt().withMessage('Mecânico ID deve ser um número'),
     body('pecas').optional().isArray().withMessage('Peças deve ser um array'),
     body('maoObra').optional().isArray().withMessage('Mão de obra deve ser um array')
   ],

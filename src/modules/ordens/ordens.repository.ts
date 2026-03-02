@@ -14,6 +14,7 @@ export interface OrdemServico {
   descricao_problema: string;
   observacoes?: string;
   motivo_cancelamento?: string;
+  mecanico_id?: number;
   total: number;
   data: Date;
   created_at: Date;
@@ -92,8 +93,8 @@ export const ordemRepository = {
         `INSERT INTO ordens_servico (
           cliente_id, veiculo_id, veiculo_placa, veiculo_chassi, veiculo_cor, 
           veiculo_descricao, km_atual, status, descricao_problema, observacoes, 
-          motivo_cancelamento, total, data, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW(), NOW()) 
+          motivo_cancelamento, mecanico_id, total, data, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), NOW()) 
         RETURNING *`,
         [
           ordem.cliente_id,
@@ -107,6 +108,7 @@ export const ordemRepository = {
           ordem.descricao_problema,
           ordem.observacoes,
           ordem.motivo_cancelamento,
+          ordem.mecanico_id,
           total
         ]
       );
@@ -188,9 +190,10 @@ export const ordemRepository = {
              descricao_problema = COALESCE($9, descricao_problema),
              observacoes = COALESCE($10, observacoes),
              motivo_cancelamento = COALESCE($11, motivo_cancelamento),
-             total = $12,
+             mecanico_id = COALESCE($12, mecanico_id),
+             total = $13,
              updated_at = NOW()
-         WHERE id = $13
+         WHERE id = $14
          RETURNING *`,
         [
           ordem.cliente_id,
@@ -204,6 +207,7 @@ export const ordemRepository = {
           ordem.descricao_problema,
           ordem.observacoes,
           ordem.motivo_cancelamento,
+          ordem.mecanico_id,
           total,
           id
         ]

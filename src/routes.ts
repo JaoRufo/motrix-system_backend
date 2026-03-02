@@ -5,6 +5,7 @@ import clientesRoutes from './modules/clientes/clientes.routes'
 import ordensRoutes from './modules/ordens/ordens.routes'
 import usuariosRoutes from './modules/usuarios/usuarios.routes'
 import veiculosRoutes from './modules/veiculos/veiculos.routes'
+import oficinasRoutes from './modules/oficinas/oficinas.routes'
 
 const routes = Router()
 
@@ -43,5 +44,10 @@ routes.use('/usuarios', usuariosRoutes)
  *  Veículos
  */
 routes.use('/veiculos', veiculosRoutes)
+
+/**
+ *  Oficinas
+ */
+routes.use('/oficinas', oficinasRoutes)
 
 export default routes

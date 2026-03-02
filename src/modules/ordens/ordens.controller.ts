@@ -81,14 +81,35 @@ export const ordemController = {
       const id = parseInt(req.params.id!);
       const ordem = await ordemService.getById(id);
       
-      const clienteResult = await pool.query('SELECT nome, telefone FROM clientes WHERE id = $1', [ordem.cliente_id]);
-      const veiculoResult = await pool.query('SELECT modelo FROM veiculos WHERE id = $1', [ordem.veiculo_id]);
+      const clienteResult = await pool.query(
+        'SELECT nome, telefone, cpf FROM clientes WHERE id = $1', 
+        [ordem.cliente_id]
+      );
+      
+      const veiculoResult = await pool.query(
+        'SELECT modelo FROM veiculos WHERE id = $1', 
+        [ordem.veiculo_id]
+      );
+      
+      const mecanicoResult = ordem.mecanico_id 
+        ? await pool.query('SELECT nome FROM usuarios WHERE id = $1', [ordem.mecanico_id])
+        : null;
+      
+      const oficinaResult = await pool.query(
+        'SELECT nome, cnpj, telefone, endereco FROM oficinas LIMIT 1'
+      );
       
       const ordemCompleta = {
         ...ordem,
         cliente_nome: clienteResult.rows[0]?.nome,
         cliente_telefone: clienteResult.rows[0]?.telefone,
-        veiculo_modelo: veiculoResult.rows[0]?.modelo
+        cliente_cpf: clienteResult.rows[0]?.cpf,
+        veiculo_modelo: veiculoResult.rows[0]?.modelo,
+        mecanico_nome: mecanicoResult?.rows[0]?.nome,
+        oficina_nome: oficinaResult.rows[0]?.nome,
+        oficina_cnpj: oficinaResult.rows[0]?.cnpj,
+        oficina_telefone: oficinaResult.rows[0]?.telefone,
+        oficina_endereco: oficinaResult.rows[0]?.endereco
       };
 
       generateOrdemPDF(ordemCompleta, res);
