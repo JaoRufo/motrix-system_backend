@@ -30,7 +30,7 @@ export const isAuthenticated = (req: AuthRequest, res: Response, next: NextFunct
 };
 
 export const isActive = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.user?.status !== 'ativo') {
+  if (!req.user || req.user.status?.trim().toLowerCase() !== 'ativo') {
     res.status(403).json({ error: 'Usuário inativo' });
     return;
   }

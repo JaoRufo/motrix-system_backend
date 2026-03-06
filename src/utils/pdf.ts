@@ -90,6 +90,7 @@ export const generateOrdemPDF = (ordem: any, res: Response) => {
     .text(`Nome: ${ordem.cliente_nome || 'N/A'}`)
     .text(`Telefone: ${ordem.cliente_telefone || 'N/A'}`);
   if (ordem.cliente_cpf) doc.text(`CPF: ${ordem.cliente_cpf}`);
+  if (ordem.cliente_endereco) doc.text(`Endereço: ${ordem.cliente_endereco}`);
 
   // =========================
   // VEÍCULO
@@ -99,8 +100,10 @@ export const generateOrdemPDF = (ordem: any, res: Response) => {
     .fontSize(10)
     .font('Helvetica')
     .text(`Placa: ${ordem.veiculo_placa || 'N/A'}`)
-    .text(`Modelo: ${ordem.veiculo_modelo || 'N/A'}`)
-    .text(`KM Atual: ${ordem.km_atual || '0'}`);
+    .text(`Modelo: ${ordem.veiculo_modelo || 'N/A'}`);
+  if (ordem.veiculo_chassi) doc.text(`Chassi: ${ordem.veiculo_chassi}`);
+  if (ordem.veiculo_cor) doc.text(`Cor: ${ordem.veiculo_cor}`);
+  doc.text(`KM Atual: ${ordem.km_atual || '0'}`);
 
   // =========================
   // DESCRIÇÃO

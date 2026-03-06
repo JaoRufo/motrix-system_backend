@@ -82,12 +82,12 @@ export const ordemController = {
       const ordem = await ordemService.getById(id);
       
       const clienteResult = await pool.query(
-        'SELECT nome, telefone, cpf FROM clientes WHERE id = $1', 
+        'SELECT nome, telefone, cpf, endereco FROM clientes WHERE id = $1', 
         [ordem.cliente_id]
       );
       
       const veiculoResult = await pool.query(
-        'SELECT modelo FROM veiculos WHERE id = $1', 
+        'SELECT modelo, chassi, cor FROM veiculos WHERE id = $1', 
         [ordem.veiculo_id]
       );
       
@@ -104,7 +104,10 @@ export const ordemController = {
         cliente_nome: clienteResult.rows[0]?.nome,
         cliente_telefone: clienteResult.rows[0]?.telefone,
         cliente_cpf: clienteResult.rows[0]?.cpf,
+        cliente_endereco: clienteResult.rows[0]?.endereco,
         veiculo_modelo: veiculoResult.rows[0]?.modelo,
+        veiculo_chassi: veiculoResult.rows[0]?.chassi || ordem.veiculo_chassi,
+        veiculo_cor: veiculoResult.rows[0]?.cor || ordem.veiculo_cor,
         mecanico_nome: mecanicoResult?.rows[0]?.nome,
         oficina_nome: oficinaResult.rows[0]?.nome,
         oficina_cnpj: oficinaResult.rows[0]?.cnpj,
