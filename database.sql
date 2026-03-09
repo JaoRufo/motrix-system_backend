@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS usuarios (
   role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'user')),
   status VARCHAR(20) DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo')),
   avatar_url VARCHAR(500),
+  oficina_nome VARCHAR(255),
+  oficina_telefone VARCHAR(20),
+  oficina_endereco TEXT,
+  mecanico_nome VARCHAR(255),
+  mecanico_id VARCHAR(100),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   ultimo_acesso TIMESTAMP
@@ -45,8 +50,9 @@ CREATE TABLE IF NOT EXISTS veiculos (
 -- Tabela de ordens de serviço
 CREATE TABLE IF NOT EXISTS ordens_servico (
   id SERIAL PRIMARY KEY,
-  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
-  veiculo_id INTEGER REFERENCES veiculos(id),
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+  veiculo_id INTEGER REFERENCES veiculos(id) ON DELETE SET NULL,
+  oficina_id INTEGER REFERENCES oficinas(id) ON DELETE SET NULL,
   veiculo_placa VARCHAR(10),
   veiculo_chassi VARCHAR(50),
   veiculo_cor VARCHAR(50),

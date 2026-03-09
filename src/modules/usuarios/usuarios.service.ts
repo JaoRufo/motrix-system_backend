@@ -2,8 +2,12 @@ import bcrypt from 'bcryptjs';
 import { usuarioRepository, Usuario } from './usuarios.repository';
 
 export const usuarioService = {
-  async getAll() {
-    return await usuarioRepository.findAll();
+  async getAll(page: number = 1, limit: number = 10) {
+    return await usuarioRepository.findAll(page, limit);
+  },
+
+  async getMecanicos() {
+    return await usuarioRepository.findMecanicos();
   },
 
   async getById(id: number) {
@@ -15,7 +19,7 @@ export const usuarioService = {
     return usuarioSemSenha;
   },
 
-  async create(data: { nome: string; username: string; email: string; senha: string; role?: string; status?: string; avatar_url?: string }) {
+  async create(data: { nome: string; username: string; email: string; senha: string; role?: string; status?: string; avatar_url?: string; oficina_nome?: string; oficina_telefone?: string; oficina_endereco?: string; mecanico_nome?: string }) {
     if (data.senha.length < 6) {
       throw new Error('Senha deve ter no mínimo 6 caracteres');
     }

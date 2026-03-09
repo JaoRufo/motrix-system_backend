@@ -20,18 +20,45 @@ export const veiculoRepository = {
   },
 
   async update(id: number, data: Partial<Veiculo>): Promise<Veiculo | null> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (data.placa !== undefined) {
+      updates.push(`placa = $${paramCount++}`);
+      values.push(data.placa.toUpperCase());
+    }
+    if (data.modelo !== undefined) {
+      updates.push(`modelo = $${paramCount++}`);
+      values.push(data.modelo);
+    }
+    if (data.ano !== undefined) {
+      updates.push(`ano = $${paramCount++}`);
+      values.push(data.ano);
+    }
+    if (data.chassi !== undefined) {
+      updates.push(`chassi = $${paramCount++}`);
+      values.push(data.chassi ? data.chassi.toUpperCase() : null);
+    }
+    if (data.cor !== undefined) {
+      updates.push(`cor = $${paramCount++}`);
+      values.push(data.cor);
+    }
+    if (data.km_atual !== undefined) {
+      updates.push(`km_atual = $${paramCount++}`);
+      values.push(data.km_atual);
+    }
+
+    if (updates.length === 0) {
+      return this.findById(id);
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+
     const result = await pool.query(
-      `UPDATE veiculos 
-       SET placa = COALESCE($1, placa),
-           modelo = COALESCE($2, modelo),
-           ano = COALESCE($3, ano),
-           chassi = COALESCE($4, chassi),
-           cor = COALESCE($5, cor),
-           km_atual = COALESCE($6, km_atual),
-           updated_at = NOW()
-       WHERE id = $7
-       RETURNING *`,
-      [data.placa?.toUpperCase(), data.modelo, data.ano, data.chassi?.toUpperCase(), data.cor, data.km_atual, id]
+      `UPDATE veiculos SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+      values
     );
     return result.rows[0] || null;
   },

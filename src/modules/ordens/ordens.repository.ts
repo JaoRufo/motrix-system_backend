@@ -36,11 +36,23 @@ export interface OrdemMaoObra {
 }
 
 export const ordemRepository = {
-  async findAll(): Promise<OrdemServico[]> {
+  async findAll(page: number = 1, limit: number = 10): Promise<{ data: OrdemServico[]; total: number; page: number; totalPages: number }> {
+    const offset = (page - 1) * limit;
+    
+    const countResult = await pool.query('SELECT COUNT(*) FROM ordens_servico');
+    const total = parseInt(countResult.rows[0].count);
+    
     const result = await pool.query(
-      'SELECT * FROM ordens_servico ORDER BY data DESC'
+      'SELECT * FROM ordens_servico ORDER BY data DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
     );
-    return result.rows;
+    
+    return {
+      data: result.rows,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   },
 
   async findById(id: number): Promise<OrdemServico | null> {

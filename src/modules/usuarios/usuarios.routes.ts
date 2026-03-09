@@ -5,6 +5,8 @@ import { isAuthenticated, isAdmin, isActive } from '../../middlewares/auth.middl
 
 const router = Router();
 
+router.get('/mecanicos', isAuthenticated, isActive, usuarioController.getMecanicos);
+
 router.get('/', isAuthenticated, isActive, isAdmin, usuarioController.getAll);
 
 router.get('/:id', isAuthenticated, isActive, isAdmin, usuarioController.getById);

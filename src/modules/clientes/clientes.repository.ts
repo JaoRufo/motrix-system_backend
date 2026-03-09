@@ -26,11 +26,23 @@ export interface Veiculo {
 }
 
 export const clienteRepository = {
-  async findAll(): Promise<Cliente[]> {
+  async findAll(page: number = 1, limit: number = 10): Promise<{ data: Cliente[]; total: number; page: number; totalPages: number }> {
+    const offset = (page - 1) * limit;
+    
+    const countResult = await pool.query('SELECT COUNT(*) FROM clientes');
+    const total = parseInt(countResult.rows[0].count);
+    
     const result = await pool.query(
-      'SELECT * FROM clientes ORDER BY created_at DESC'
+      'SELECT * FROM clientes ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
     );
-    return result.rows;
+    
+    return {
+      data: result.rows,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   },
 
   async findById(id: number): Promise<Cliente | null> {
@@ -101,7 +113,7 @@ export const clienteRepository = {
     return result.rows[0] || null;
   },
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: number) {
     const result = await pool.query('DELETE FROM clientes WHERE id = $1', [id]);
     return result.rowCount! > 0;
   },

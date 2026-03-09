@@ -3,16 +3,21 @@ import { ordemRepository, OrdemServico, OrdemPeca, OrdemMaoObra } from './ordens
 const STATUS_VALIDOS = ['Aberta', 'Em Andamento', 'Aguardando Orçamento', 'Finalizada', 'Cancelada'];
 
 export const ordemService = {
-  async getAll() {
-    const ordens = await ordemRepository.findAll();
+  async getAll(page: number = 1, limit: number = 10) {
+    const result = await ordemRepository.findAll(page, limit);
     const ordensComItens = await Promise.all(
-      ordens.map(async (ordem) => {
+      result.data.map(async (ordem) => {
         const pecas = await ordemRepository.findPecasByOrdemId(ordem.id);
         const maoObra = await ordemRepository.findMaoObraByOrdemId(ordem.id);
         return { ...ordem, pecas, maoObra };
       })
     );
-    return ordensComItens;
+    return {
+      data: ordensComItens,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages
+    };
   },
 
   async getById(id: number) {

@@ -6,7 +6,9 @@ import { validationResult } from 'express-validator';
 export const clienteController = {
   async getAll(req: AuthRequest, res: Response) {
     try {
-      const clientes = await clienteService.getAll();
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const clientes = await clienteService.getAll(page, limit);
       res.json(clientes);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao buscar clientes' });
@@ -15,7 +17,7 @@ export const clienteController = {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const cliente = await clienteService.getById(id);
       res.json(cliente);
     } catch (error: any) {
@@ -46,7 +48,7 @@ export const clienteController = {
         return;
       }
 
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const cliente = await clienteService.update(id, req.body);
       res.json(cliente);
     } catch (error: any) {
@@ -56,7 +58,7 @@ export const clienteController = {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const result = await clienteService.delete(id);
       res.json(result);
     } catch (error: any) {
@@ -66,7 +68,7 @@ export const clienteController = {
 
   async getHistorico(req: AuthRequest, res: Response) {
     try {
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const historico = await clienteService.getHistorico(id);
       res.json(historico);
     } catch (error: any) {

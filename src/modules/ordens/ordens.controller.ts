@@ -8,7 +8,9 @@ import { pool } from '../../config/database';
 export const ordemController = {
   async getAll(req: AuthRequest, res: Response) {
     try {
-      const ordens = await ordemService.getAll();
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const ordens = await ordemService.getAll(page, limit);
       res.json(ordens);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao buscar ordens de serviço' });
@@ -17,7 +19,7 @@ export const ordemController = {
 
   async getById(req: AuthRequest, res: Response) {
     try {
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const ordem = await ordemService.getById(id);
       res.json(ordem);
     } catch (error: any) {
@@ -27,7 +29,7 @@ export const ordemController = {
 
   async getByPlaca(req: AuthRequest, res: Response) {
     try {
-      const placa = req.params.placa!;
+      const placa = req.params.placa as string;
       const ordens = await ordemService.getByPlaca(placa);
       res.json(ordens);
     } catch (error: any) {
@@ -58,7 +60,7 @@ export const ordemController = {
         return;
       }
 
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const ordem = await ordemService.update(id, req.body);
       res.json(ordem);
     } catch (error: any) {
@@ -68,7 +70,7 @@ export const ordemController = {
 
   async delete(req: AuthRequest, res: Response) {
     try {
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const result = await ordemService.delete(id);
       res.json(result);
     } catch (error: any) {
@@ -78,27 +80,23 @@ export const ordemController = {
 
   async downloadPDF(req: AuthRequest, res: Response) {
     try {
-      const id = parseInt(req.params.id!);
+      const id = parseInt(req.params.id as string);
       const ordem = await ordemService.getById(id);
-      
+
       const clienteResult = await pool.query(
-        'SELECT nome, telefone, cpf, endereco FROM clientes WHERE id = $1', 
+        'SELECT nome, telefone, cpf, endereco FROM clientes WHERE id = $1',
         [ordem.cliente_id]
       );
-      
+
       const veiculoResult = await pool.query(
-        'SELECT modelo, chassi, cor FROM veiculos WHERE id = $1', 
+        'SELECT modelo, chassi, cor FROM veiculos WHERE id = $1',
         [ordem.veiculo_id]
       );
-      
-      const mecanicoResult = ordem.mecanico_id 
-        ? await pool.query('SELECT nome FROM usuarios WHERE id = $1', [ordem.mecanico_id])
+
+      const mecanicoResult = ordem.mecanico_id
+        ? await pool.query('SELECT nome, oficina_nome, oficina_telefone, oficina_endereco, mecanico_nome FROM usuarios WHERE id = $1', [ordem.mecanico_id])
         : null;
-      
-      const oficinaResult = await pool.query(
-        'SELECT nome, cnpj, telefone, endereco FROM oficinas LIMIT 1'
-      );
-      
+
       const ordemCompleta = {
         ...ordem,
         cliente_nome: clienteResult.rows[0]?.nome,
@@ -108,11 +106,10 @@ export const ordemController = {
         veiculo_modelo: veiculoResult.rows[0]?.modelo,
         veiculo_chassi: veiculoResult.rows[0]?.chassi || ordem.veiculo_chassi,
         veiculo_cor: veiculoResult.rows[0]?.cor || ordem.veiculo_cor,
-        mecanico_nome: mecanicoResult?.rows[0]?.nome,
-        oficina_nome: oficinaResult.rows[0]?.nome,
-        oficina_cnpj: oficinaResult.rows[0]?.cnpj,
-        oficina_telefone: oficinaResult.rows[0]?.telefone,
-        oficina_endereco: oficinaResult.rows[0]?.endereco
+        oficina_nome: mecanicoResult?.rows[0]?.oficina_nome || 'MOTRIX AUTO CENTER',
+        oficina_telefone: mecanicoResult?.rows[0]?.oficina_telefone || 'N/A',
+        oficina_endereco: mecanicoResult?.rows[0]?.oficina_endereco || 'N/A',
+        mecanico_nome: mecanicoResult?.rows[0]?.mecanico_nome || 'N/A'
       };
 
       generateOrdemPDF(ordemCompleta, res);

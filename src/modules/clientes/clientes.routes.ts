@@ -28,8 +28,11 @@ router.put(
   isAuthenticated,
   isActive,
   [
-    body('nome').optional().notEmpty().withMessage('Nome não pode ser vazio'),
-    body('telefone').optional().notEmpty().withMessage('Telefone não pode ser vazio')
+    body('cliente.nome').optional().notEmpty().withMessage('Nome não pode ser vazio'),
+    body('cliente.telefone').optional().notEmpty().withMessage('Telefone não pode ser vazio'),
+    body('veiculos').optional().isArray().withMessage('Veículos deve ser um array'),
+    body('veiculos.*.placa').optional().notEmpty().withMessage('Placa não pode ser vazia'),
+    body('veiculos.*.modelo').optional().notEmpty().withMessage('Modelo não pode ser vazio')
   ],
   clienteController.update
 );
