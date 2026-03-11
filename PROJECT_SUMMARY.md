@@ -133,9 +133,7 @@ motrix_backend/
 
 ## 🔐 Credenciais Padrão
 
-**Admin:**
-- Username: `admin`
-- Password: `admin123`
+
 
 ## 🚀 Como Usar
 

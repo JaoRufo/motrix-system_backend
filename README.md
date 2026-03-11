@@ -14,6 +14,9 @@ Backend completo para sistema de gestão de oficina mecânica desenvolvido com N
 - **express-validator** - Validação de dados
 - **dotenv** - Variáveis de ambiente
 - **CORS** - Controle de acesso
+- **PDFKit** - Geração de PDF
+- **Winston** - Sistema de logs
+- **Morgan** - Logger HTTP
 
 ## 📁 Estrutura do Projeto
 
@@ -39,16 +42,30 @@ motrix_backend/
 │   │   │   ├── clientes.service.ts
 │   │   │   ├── clientes.repository.ts
 │   │   │   └── clientes.routes.ts
-│   │   └── ordens/              # Módulo de ordens de serviço
-│   │       ├── ordens.controller.ts
-│   │       ├── ordens.service.ts
-│   │       ├── ordens.repository.ts
-│   │       └── ordens.routes.ts
+│   │   ├── veiculos/            # Módulo de veículos
+│   │   │   ├── veiculos.controller.ts
+│   │   │   ├── veiculos.service.ts
+│   │   │   ├── veiculos.repository.ts
+│   │   │   └── veiculos.routes.ts
+│   │   ├── ordens/              # Módulo de ordens de serviço
+│   │   │   ├── ordens.controller.ts
+│   │   │   ├── ordens.service.ts
+│   │   │   ├── ordens.repository.ts
+│   │   │   └── ordens.routes.ts
+│   │   └── oficinas/            # Módulo de oficinas
+│   │       ├── oficinas.controller.ts
+│   │       ├── oficinas.service.ts
+│   │       ├── oficinas.repository.ts
+│   │       └── oficinas.routes.ts
 │   ├── utils/
-│   │   └── jwt.ts               # Utilitários JWT
+│   │   ├── jwt.ts               # Utilitários JWT
+│   │   ├── logger.ts            # Sistema de logs
+│   │   └── pdf.ts               # Geração de PDF
 │   ├── routes.ts                # Rotas principais
 │   └── server.ts                # Servidor Express
 ├── database.sql                 # Script de criação do banco
+├── database_update.sql          # Script de atualização do banco
+├── start.sh                     # Script de inicialização
 ├── .env                         # Variáveis de ambiente
 ├── package.json
 └── tsconfig.json
@@ -64,26 +81,33 @@ motrix_backend/
 - **ordens_servico** - Ordens de serviço
 - **ordem_pecas** - Peças utilizadas nas ordens
 - **ordem_mao_obra** - Mão de obra das ordens
+- **oficinas** - Dados da oficina (CNPJ, telefone, endereço)
 
 ### Configuração
 
 1. Crie o banco de dados PostgreSQL:
 ```bash
-createdb oficina
+sudo -u postgres createdb oficina
 ```
 
 2. Execute o script SQL:
 ```bash
-psql -d oficina -f database.sql
+sudo -u postgres psql -d oficina -f database.sql
 ```
 
-3. Configure o arquivo `.env`:
+3. Execute o script de atualização:
+```bash
+sudo -u postgres psql -d oficina -f database_update.sql
+```
+
+4. Configure o arquivo `.env`:
 ```env
 PORT=3000
 DATABASE_URL=postgres://postgres:senha@localhost:5432/oficina
 JWT_SECRET=sua_chave_super_ultra_secreta
 JWT_EXPIRES_IN=24h
 BCRYPT_ROUNDS=10
+NODE_ENV=development
 ```
 
 ## 📦 Instalação
@@ -100,6 +124,9 @@ npm run build
 
 # Executar em produção
 npm start
+
+# Iniciar com script (PostgreSQL + Servidor)
+./start.sh
 ```
 
 ## 🔐 Autenticação
@@ -109,12 +136,15 @@ npm start
 **Admin:**
 - Acesso total ao sistema
 - Gerenciar usuários (CRUD)
-- Gerenciar clientes e ordens
+- Gerenciar clientes, veículos e ordens
+- Configurar dados da oficina
 
 **User:**
 - Gerenciar clientes
+- Gerenciar veículos
 - Gerenciar ordens de serviço
 - NÃO pode acessar rotas de usuários
+- NÃO pode configurar oficina
 
 ### Middlewares
 
@@ -142,6 +172,13 @@ DELETE /api/clientes/:id          # Excluir
 GET    /api/clientes/:id/historico # Histórico de ordens
 ```
 
+### Veículos (Autenticado + Ativo)
+
+```
+PUT    /api/veiculos/:id   # Atualizar veículo
+DELETE /api/veiculos/:id   # Excluir veículo
+```
+
 ### Ordens de Serviço (Autenticado + Ativo)
 
 ```
@@ -151,6 +188,14 @@ POST   /api/ordens                # Criar
 PUT    /api/ordens/:id            # Atualizar
 DELETE /api/ordens/:id            # Excluir
 GET    /api/ordens/veiculo/:placa # Buscar por placa
+GET    /api/ordens/:id/pdf        # Baixar PDF da ordem
+```
+
+### Oficinas (Autenticado + Ativo)
+
+```
+GET    /api/oficinas       # Buscar dados da oficina
+PUT    /api/oficinas/:id   # Atualizar oficina (Admin)
 ```
 
 ### Usuários (Autenticado + Ativo + Admin)
@@ -205,11 +250,28 @@ Authorization: Bearer {token}
     {
       "placa": "ABC-1234",
       "modelo": "Fiat Uno",
-      "ano": "2000",
+      "ano": "2015",
+      "chassi": "9BWZZZ377VT004251",
       "cor": "Branco",
       "km_atual": 50000
     }
   ]
+}
+```
+
+### Atualizar Veículo
+
+```json
+PUT /api/veiculos/1
+Authorization: Bearer {token}
+
+{
+  "placa": "ABC-1234",
+  "modelo": "Fiat Uno",
+  "ano": "2015",
+  "chassi": "9BWZZZ377VT004251",
+  "cor": "Preto",
+  "km_atual": 55000
 }
 ```
 
@@ -227,7 +289,8 @@ Authorization: Bearer {token}
     "km_atual": 51000,
     "status": "Aberta",
     "descricao_problema": "Troca de óleo e filtros",
-    "observacoes": "Cliente solicitou revisão completa"
+    "observacoes": "Cliente solicitou revisão completa",
+    "mecanico_id": 2
   },
   "pecas": [
     {
@@ -248,6 +311,40 @@ Authorization: Bearer {token}
 }
 ```
 
+### Configurar Oficina
+
+```json
+PUT /api/oficinas/1
+Authorization: Bearer {token}
+
+{
+  "nome": "Motrix Auto Center",
+  "cnpj": "12.345.678/0001-90",
+  "telefone": "(11) 3456-7890",
+  "endereco": "Rua das Oficinas, 100 - São Paulo/SP"
+}
+```
+
+## 📄 Geração de PDF
+
+O sistema gera PDF profissional das ordens de serviço com:
+
+- ✅ Cabeçalho com dados da oficina (nome, CNPJ, telefone, endereço)
+- ✅ Número da OS formatado (000001)
+- ✅ Data e hora de abertura e geração
+- ✅ Status da ordem
+- ✅ Dados completos do cliente (nome, telefone, CPF, endereço)
+- ✅ Dados completos do veículo (placa, modelo, chassi, cor, KM)
+- ✅ Nome do mecânico responsável
+- ✅ Descrição do problema e observações
+- ✅ Lista detalhada de peças com valores
+- ✅ Lista detalhada de mão de obra com valores
+- ✅ Valor total destacado
+- ✅ Campos para assinatura do cliente e mecânico
+- ✅ Layout profissional pronto para impressão (A4)
+
+**Rota:** `GET /api/ordens/:id/pdf`
+
 ## 🔒 Regras de Negócio
 
 1. Cliente deve ter pelo menos 1 veículo
@@ -258,6 +355,8 @@ Authorization: Bearer {token}
 6. Motivo de cancelamento obrigatório se status = 'Cancelada'
 7. KM do veículo atualizado quando ordem finalizada/cancelada
 8. Todas as operações críticas usam transações SQL
+9. Placa e chassi sempre salvos em MAIÚSCULO
+10. Mecânico responsável é opcional na ordem de serviço
 
 ## 🎯 Status de Ordem de Serviço
 
@@ -273,6 +372,7 @@ Authorization: Bearer {token}
 Username: admin
 Password: admin123
 Role: admin
+Status: ativo
 ```
 
 ## 🛡️ Segurança
@@ -283,6 +383,8 @@ Role: admin
 - Proteção de rotas com middlewares
 - Transações SQL para integridade de dados
 - CORS habilitado
+- Logs de todas as operações
+- Tratamento de erros não capturados
 
 ## 📊 Performance
 
@@ -293,6 +395,18 @@ Role: admin
   - ordens_servico(data)
   - veiculos(cliente_id)
 
+## 📋 Sistema de Logs
+
+O sistema possui logs completos e coloridos:
+
+- ✅ Inicialização do servidor
+- ✅ Conexão com banco de dados
+- ✅ Todas as requisições HTTP (método, URL, status, tempo)
+- ✅ Login/logout de usuários
+- ✅ Operações CRUD
+- ✅ Erros e exceções
+- ✅ Encerramento gracioso (CTRL+C)
+
 ## 🧪 Testando a API
 
 Use ferramentas como:
@@ -301,10 +415,51 @@ Use ferramentas como:
 - Thunder Client (VS Code)
 - cURL
 
+## 🚀 Deploy em Produção
+
+### Checklist
+
+- [ ] Implementar sistema de migrations (node-pg-migrate)
+- [ ] Configurar backup automático do banco
+- [ ] Separar variáveis de ambiente (dev/prod)
+- [ ] Configurar logs em arquivo (não apenas console)
+- [ ] Implementar monitoramento de erros (Sentry)
+- [ ] Configurar CI/CD
+- [ ] Implementar testes automatizados
+- [ ] Configurar SSL/HTTPS
+- [ ] Limitar rate de requisições
+- [ ] Configurar health check endpoint
+
+### Variáveis de Ambiente Produção
+
+```env
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgres://user:pass@host:5432/db
+JWT_SECRET=chave_super_secreta_producao
+JWT_EXPIRES_IN=24h
+BCRYPT_ROUNDS=12
+```
+
+## 📄 Documentação Adicional
+
+- [FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md) - Guia de integração com frontend
+
+## 🤝 Contribuindo
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
 ## 📄 Licença
 
-Este projeto foi desenvolvido para o sistema Motrix.
+Este projeto foi desenvolvido para o sistema Motrix - Propriedade de João Victor Rufo Pereira.
 
 ---
 
-Desenvolvido para gestão de oficinas mecânicas
+**Desenvolvido para gestão de oficinas mecânicas**
+
+**Versão:** 2.0.0  
+**Última atualização:** Novembro 2024
