@@ -366,14 +366,6 @@ O sistema gera PDF profissional das ordens de serviço com:
 - `Finalizada`
 - `Cancelada`
 
-## 👤 Usuário Padrão
-
-```
-Username: admin
-Password: admin123
-Role: admin
-Status: ativo
-```
 
 ## 🛡️ Segurança
 
@@ -462,4 +454,4 @@ Este projeto foi desenvolvido para o sistema Motrix - Propriedade de João Victo
 **Desenvolvido para gestão de oficinas mecânicas**
 
 **Versão:** 2.0.0  
-**Última atualização:** Novembro 2024
+**Última atualização:** Março de 2026
