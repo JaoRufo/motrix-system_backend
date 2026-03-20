@@ -7,17 +7,17 @@ export const authService = {
     const usuario = await usuarioRepository.findByUsername(username);
     
     if (!usuario) {
-      throw new Error('Credenciais inválidas');
-    }
-
-    if (usuario.status !== 'ativo') {
-      throw new Error('Usuário inativo');
+      throw new Error('Usuário ou senha inválidos');
     }
 
     const senhaValida = await bcrypt.compare(password, usuario.senha);
     
     if (!senhaValida) {
-      throw new Error('Credenciais inválidas');
+      throw new Error('Usuário ou senha inválidos');
+    }
+
+    if (usuario.status !== 'ativo') {
+      throw new Error('Usuário inativo, contate um administrador');
     }
 
     await usuarioRepository.updateUltimoAcesso(usuario.id);
