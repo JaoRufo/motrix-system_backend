@@ -122,5 +122,12 @@ export const usuarioRepository = {
 
   async updateUltimoAcesso(id: number): Promise<void> {
     await pool.query('UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = $1', [id]);
+  },
+
+  async updateSenha(id: number, senhaHash: string): Promise<void> {
+    await pool.query(
+      'UPDATE usuarios SET senha = $1, updated_at = NOW() WHERE id = $2',
+      [senhaHash, id]
+    );
   }
 };
