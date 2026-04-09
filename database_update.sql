@@ -23,3 +23,9 @@ VALUES (
 ) ON CONFLICT (cnpj) DO NOTHING;
 
 COMMENT ON TABLE oficinas IS 'Tabela de oficinas/empresas';
+
+-- Adicionar data_prevista na tabela ordens_servico
+ALTER TABLE ordens_servico
+ADD COLUMN IF NOT EXISTS data_prevista DATE;
+
+CREATE INDEX IF NOT EXISTS idx_ordens_data_prevista ON ordens_servico(data_prevista);
