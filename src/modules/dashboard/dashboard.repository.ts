@@ -14,7 +14,11 @@ export const dashboardRepository = {
         COUNT(*) FILTER (WHERE status = 'Aberta')                                                            AS "totalOrdersOpen",
         COUNT(*) FILTER (WHERE status = 'Em Andamento')                                                      AS "totalOrdersInProgress",
         COUNT(*) FILTER (WHERE status = 'Finalizada')                                                        AS "totalOrdersCompleted",
-        COUNT(*) FILTER (WHERE status NOT IN ('Finalizada', 'Cancelada') AND data < NOW() - INTERVAL '7 days') AS "totalOrdersLate"
+        COUNT(*) FILTER (
+          WHERE status NOT IN ('Finalizada', 'Cancelada')
+          AND data_prevista IS NOT NULL
+          AND data_prevista < NOW()
+        ) AS "totalOrdersLate"
       FROM ordens_servico
     `);
 
@@ -58,10 +62,14 @@ export const dashboardRepository = {
       : await pool.query(query);
 
     return result.rows.map((r) => ({
-      date:
-        r.date instanceof Date
-          ? r.date.toISOString().split("T")[0]
-          : String(r.date),
+      date: (() => {
+        const iso =
+          r.date instanceof Date
+            ? r.date.toISOString().split("T")[0]
+            : String(r.date).split("T")[0];
+        const [y, m, d] = iso.split("-");
+        return `${d}-${m}-${y}`;
+      })(),
       revenue: Number(r.revenue),
     }));
   },
@@ -83,7 +91,9 @@ export const dashboardRepository = {
     const result = await pool.query(`
       SELECT
         COUNT(*) FILTER (
-          WHERE status NOT IN ('Finalizada', 'Cancelada') AND data < NOW() - INTERVAL '7 days'
+          WHERE status NOT IN ('Finalizada', 'Cancelada')
+          AND data_prevista IS NOT NULL
+          AND data_prevista < NOW()
         ) AS late_orders,
         COUNT(*) FILTER (
           WHERE status NOT IN ('Finalizada', 'Cancelada')

@@ -1,5 +1,5 @@
-import { pool } from '/home/joao_rufo/motrix_backend/src/config/database';
-import { PoolClient } from 'pg';
+import { pool } from "/home/joao_rufo/motrix_backend/src/config/database";
+import { PoolClient } from "pg";
 
 export interface OrdemServico {
   id: number;
@@ -17,6 +17,7 @@ export interface OrdemServico {
   mecanico_id?: number;
   total: number;
   data: Date;
+  data_prevista?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -36,66 +37,78 @@ export interface OrdemMaoObra {
 }
 
 export const ordemRepository = {
-  async findAll(page: number = 1, limit: number = 10): Promise<{ data: OrdemServico[]; total: number; page: number; totalPages: number }> {
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    data: OrdemServico[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
     const offset = (page - 1) * limit;
-    
-    const countResult = await pool.query('SELECT COUNT(*) FROM ordens_servico');
+
+    const countResult = await pool.query("SELECT COUNT(*) FROM ordens_servico");
     const total = parseInt(countResult.rows[0].count);
-    
+
     const result = await pool.query(
-      'SELECT * FROM ordens_servico ORDER BY data DESC LIMIT $1 OFFSET $2',
-      [limit, offset]
+      "SELECT * FROM ordens_servico ORDER BY data DESC LIMIT $1 OFFSET $2",
+      [limit, offset],
     );
-    
+
     return {
       data: result.rows,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   },
 
   async findById(id: number): Promise<OrdemServico | null> {
     const result = await pool.query(
-      'SELECT * FROM ordens_servico WHERE id = $1',
-      [id]
+      "SELECT * FROM ordens_servico WHERE id = $1",
+      [id],
     );
     return result.rows[0] || null;
   },
 
   async findByPlaca(placa: string): Promise<OrdemServico[]> {
     const result = await pool.query(
-      'SELECT * FROM ordens_servico WHERE veiculo_placa = $1 ORDER BY data DESC',
-      [placa.toUpperCase()]
+      "SELECT * FROM ordens_servico WHERE veiculo_placa = $1 ORDER BY data DESC",
+      [placa.toUpperCase()],
     );
     return result.rows;
   },
 
   async findPecasByOrdemId(ordemId: number): Promise<OrdemPeca[]> {
     const result = await pool.query(
-      'SELECT * FROM ordem_pecas WHERE ordem_id = $1',
-      [ordemId]
+      "SELECT * FROM ordem_pecas WHERE ordem_id = $1",
+      [ordemId],
     );
     return result.rows;
   },
 
   async findMaoObraByOrdemId(ordemId: number): Promise<OrdemMaoObra[]> {
     const result = await pool.query(
-      'SELECT * FROM ordem_mao_obra WHERE ordem_id = $1',
-      [ordemId]
+      "SELECT * FROM ordem_mao_obra WHERE ordem_id = $1",
+      [ordemId],
     );
     return result.rows;
   },
 
   async createWithItens(
-    ordem: Omit<OrdemServico, 'id' | 'created_at' | 'updated_at' | 'total'>,
-    pecas: Omit<OrdemPeca, 'id' | 'ordem_id'>[],
-    maoObra: Omit<OrdemMaoObra, 'id' | 'ordem_id'>[]
-  ): Promise<{ ordem: OrdemServico; pecas: OrdemPeca[]; maoObra: OrdemMaoObra[] }> {
+    ordem: Omit<OrdemServico, "id" | "created_at" | "updated_at" | "total">,
+    pecas: Omit<OrdemPeca, "id" | "ordem_id">[],
+    maoObra: Omit<OrdemMaoObra, "id" | "ordem_id">[],
+  ): Promise<{
+    ordem: OrdemServico;
+    pecas: OrdemPeca[];
+    maoObra: OrdemMaoObra[];
+  }> {
     const client: PoolClient = await pool.connect();
 
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       const totalPecas = pecas.reduce((sum, p) => sum + Number(p.valor), 0);
       const totalMaoObra = maoObra.reduce((sum, m) => sum + Number(m.valor), 0);
@@ -105,8 +118,8 @@ export const ordemRepository = {
         `INSERT INTO ordens_servico (
           cliente_id, veiculo_id, veiculo_placa, veiculo_chassi, veiculo_cor, 
           veiculo_descricao, km_atual, status, descricao_problema, observacoes, 
-          motivo_cancelamento, mecanico_id, total, data, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), NOW()) 
+          motivo_cancelamento, mecanico_id, total, data_prevista, data, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW(), NOW()) 
         RETURNING *`,
         [
           ordem.cliente_id,
@@ -121,8 +134,9 @@ export const ordemRepository = {
           ordem.observacoes,
           ordem.motivo_cancelamento,
           ordem.mecanico_id,
-          total
-        ]
+          total,
+          ordem.data_prevista ?? null,
+        ],
       );
 
       const ordemCriada = ordemResult.rows[0];
@@ -131,31 +145,38 @@ export const ordemRepository = {
 
       for (const peca of pecas) {
         const pecaResult = await client.query(
-          'INSERT INTO ordem_pecas (ordem_id, nome, valor) VALUES ($1, $2, $3) RETURNING *',
-          [ordemCriada.id, peca.nome, peca.valor]
+          "INSERT INTO ordem_pecas (ordem_id, nome, valor) VALUES ($1, $2, $3) RETURNING *",
+          [ordemCriada.id, peca.nome, peca.valor],
         );
         pecasCriadas.push(pecaResult.rows[0]);
       }
 
       for (const mo of maoObra) {
         const moResult = await client.query(
-          'INSERT INTO ordem_mao_obra (ordem_id, descricao, valor) VALUES ($1, $2, $3) RETURNING *',
-          [ordemCriada.id, mo.descricao, mo.valor]
+          "INSERT INTO ordem_mao_obra (ordem_id, descricao, valor) VALUES ($1, $2, $3) RETURNING *",
+          [ordemCriada.id, mo.descricao, mo.valor],
         );
         maoObraCriada.push(moResult.rows[0]);
       }
 
-      if (ordem.veiculo_id && (ordem.status === 'Finalizada' || ordem.status === 'Cancelada')) {
+      if (
+        ordem.veiculo_id &&
+        (ordem.status === "Finalizada" || ordem.status === "Cancelada")
+      ) {
         await client.query(
-          'UPDATE veiculos SET km_atual = $1, updated_at = NOW() WHERE id = $2',
-          [ordem.km_atual, ordem.veiculo_id]
+          "UPDATE veiculos SET km_atual = $1, updated_at = NOW() WHERE id = $2",
+          [ordem.km_atual, ordem.veiculo_id],
         );
       }
 
-      await client.query('COMMIT');
-      return { ordem: ordemCriada, pecas: pecasCriadas, maoObra: maoObraCriada };
+      await client.query("COMMIT");
+      return {
+        ordem: ordemCriada,
+        pecas: pecasCriadas,
+        maoObra: maoObraCriada,
+      };
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -165,27 +186,36 @@ export const ordemRepository = {
   async updateWithItens(
     id: number,
     ordem: Partial<OrdemServico>,
-    pecas?: Omit<OrdemPeca, 'id' | 'ordem_id'>[],
-    maoObra?: Omit<OrdemMaoObra, 'id' | 'ordem_id'>[]
-  ): Promise<{ ordem: OrdemServico; pecas: OrdemPeca[]; maoObra: OrdemMaoObra[] }> {
+    pecas?: Omit<OrdemPeca, "id" | "ordem_id">[],
+    maoObra?: Omit<OrdemMaoObra, "id" | "ordem_id">[],
+  ): Promise<{
+    ordem: OrdemServico;
+    pecas: OrdemPeca[];
+    maoObra: OrdemMaoObra[];
+  }> {
     const client: PoolClient = await pool.connect();
 
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       const ordemAtual = await this.findById(id);
       if (!ordemAtual) {
-        throw new Error('Ordem não encontrada');
+        throw new Error("Ordem não encontrada");
       }
 
       let total = ordemAtual.total;
 
       if (pecas && maoObra) {
-        await client.query('DELETE FROM ordem_pecas WHERE ordem_id = $1', [id]);
-        await client.query('DELETE FROM ordem_mao_obra WHERE ordem_id = $1', [id]);
+        await client.query("DELETE FROM ordem_pecas WHERE ordem_id = $1", [id]);
+        await client.query("DELETE FROM ordem_mao_obra WHERE ordem_id = $1", [
+          id,
+        ]);
 
         const totalPecas = pecas.reduce((sum, p) => sum + Number(p.valor), 0);
-        const totalMaoObra = maoObra.reduce((sum, m) => sum + Number(m.valor), 0);
+        const totalMaoObra = maoObra.reduce(
+          (sum, m) => sum + Number(m.valor),
+          0,
+        );
         total = totalPecas + totalMaoObra;
       }
 
@@ -204,8 +234,9 @@ export const ordemRepository = {
              motivo_cancelamento = COALESCE($11, motivo_cancelamento),
              mecanico_id = COALESCE($12, mecanico_id),
              total = $13,
+             data_prevista = COALESCE($14, data_prevista),
              updated_at = NOW()
-         WHERE id = $14
+         WHERE id = $15
          RETURNING *`,
         [
           ordem.cliente_id,
@@ -221,8 +252,9 @@ export const ordemRepository = {
           ordem.motivo_cancelamento,
           ordem.mecanico_id,
           total,
-          id
-        ]
+          ordem.data_prevista ?? null,
+          id,
+        ],
       );
 
       const ordemAtualizada = ordemResult.rows[0];
@@ -232,8 +264,8 @@ export const ordemRepository = {
       if (pecas) {
         for (const peca of pecas) {
           const pecaResult = await client.query(
-            'INSERT INTO ordem_pecas (ordem_id, nome, valor) VALUES ($1, $2, $3) RETURNING *',
-            [id, peca.nome, peca.valor]
+            "INSERT INTO ordem_pecas (ordem_id, nome, valor) VALUES ($1, $2, $3) RETURNING *",
+            [id, peca.nome, peca.valor],
           );
           pecasAtualizadas.push(pecaResult.rows[0]);
         }
@@ -244,8 +276,8 @@ export const ordemRepository = {
       if (maoObra) {
         for (const mo of maoObra) {
           const moResult = await client.query(
-            'INSERT INTO ordem_mao_obra (ordem_id, descricao, valor) VALUES ($1, $2, $3) RETURNING *',
-            [id, mo.descricao, mo.valor]
+            "INSERT INTO ordem_mao_obra (ordem_id, descricao, valor) VALUES ($1, $2, $3) RETURNING *",
+            [id, mo.descricao, mo.valor],
           );
           maoObraAtualizada.push(moResult.rows[0]);
         }
@@ -253,17 +285,25 @@ export const ordemRepository = {
         maoObraAtualizada = await this.findMaoObraByOrdemId(id);
       }
 
-      if (ordem.veiculo_id && ordem.km_atual && (ordem.status === 'Finalizada' || ordem.status === 'Cancelada')) {
+      if (
+        ordem.veiculo_id &&
+        ordem.km_atual &&
+        (ordem.status === "Finalizada" || ordem.status === "Cancelada")
+      ) {
         await client.query(
-          'UPDATE veiculos SET km_atual = $1, updated_at = NOW() WHERE id = $2',
-          [ordem.km_atual, ordem.veiculo_id]
+          "UPDATE veiculos SET km_atual = $1, updated_at = NOW() WHERE id = $2",
+          [ordem.km_atual, ordem.veiculo_id],
         );
       }
 
-      await client.query('COMMIT');
-      return { ordem: ordemAtualizada, pecas: pecasAtualizadas, maoObra: maoObraAtualizada };
+      await client.query("COMMIT");
+      return {
+        ordem: ordemAtualizada,
+        pecas: pecasAtualizadas,
+        maoObra: maoObraAtualizada,
+      };
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -271,7 +311,10 @@ export const ordemRepository = {
   },
 
   async delete(id: number): Promise<boolean> {
-    const result = await pool.query('DELETE FROM ordens_servico WHERE id = $1', [id]);
+    const result = await pool.query(
+      "DELETE FROM ordens_servico WHERE id = $1",
+      [id],
+    );
     return result.rowCount! > 0;
-  }
+  },
 };
