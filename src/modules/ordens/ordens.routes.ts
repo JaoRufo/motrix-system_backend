@@ -89,4 +89,11 @@ router.delete("/:id", isAuthenticated, isActive, ordemController.delete);
 
 router.get("/:id/pdf", isAuthenticated, isActive, ordemController.downloadPDF);
 
+router.get(
+  "/:id/whatsapp",
+  isAuthenticated,
+  isActive,
+  ordemController.getWhatsAppLink,
+);
+
 export default router;
