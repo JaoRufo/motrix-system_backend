@@ -1,9 +1,9 @@
-import { Response } from 'express';
-import { AuthRequest } from '../../middlewares/auth.middleware';
-import { ordemService } from './ordens.service';
-import { validationResult } from 'express-validator';
-import { generateOrdemPDF } from '../../utils/pdf';
-import { pool } from '../../config/database';
+import { Response } from "express";
+import { AuthRequest } from "../../middlewares/auth.middleware";
+import { ordemService } from "./ordens.service";
+import { validationResult } from "express-validator";
+import { generateOrdemPDF } from "../../utils/pdf";
+import { pool } from "../../config/database";
 
 export const ordemController = {
   async getAll(req: AuthRequest, res: Response) {
@@ -13,7 +13,7 @@ export const ordemController = {
       const ordens = await ordemService.getAll(page, limit);
       res.json(ordens);
     } catch (error) {
-      res.status(500).json({ error: 'Erro ao buscar ordens de serviço' });
+      res.status(500).json({ error: "Erro ao buscar ordens de serviço" });
     }
   },
 
@@ -84,17 +84,20 @@ export const ordemController = {
       const ordem = await ordemService.getById(id);
 
       const clienteResult = await pool.query(
-        'SELECT nome, telefone, cpf, endereco FROM clientes WHERE id = $1',
-        [ordem.cliente_id]
+        "SELECT nome, telefone, cpf, endereco FROM clientes WHERE id = $1",
+        [ordem.cliente_id],
       );
 
       const veiculoResult = await pool.query(
-        'SELECT modelo, chassi, cor FROM veiculos WHERE id = $1',
-        [ordem.veiculo_id]
+        "SELECT modelo, chassi, cor FROM veiculos WHERE id = $1",
+        [ordem.veiculo_id],
       );
 
       const mecanicoResult = ordem.mecanico_id
-        ? await pool.query('SELECT nome, oficina_nome, oficina_telefone, oficina_endereco, mecanico_nome FROM usuarios WHERE id = $1', [ordem.mecanico_id])
+        ? await pool.query(
+            "SELECT nome, oficina_nome, oficina_telefone, oficina_endereco, mecanico_nome FROM usuarios WHERE id = $1",
+            [ordem.mecanico_id],
+          )
         : null;
 
       const ordemCompleta = {
@@ -106,15 +109,31 @@ export const ordemController = {
         veiculo_modelo: veiculoResult.rows[0]?.modelo,
         veiculo_chassi: veiculoResult.rows[0]?.chassi || ordem.veiculo_chassi,
         veiculo_cor: veiculoResult.rows[0]?.cor || ordem.veiculo_cor,
-        oficina_nome: mecanicoResult?.rows[0]?.oficina_nome || 'MOTRIX AUTO CENTER',
-        oficina_telefone: mecanicoResult?.rows[0]?.oficina_telefone || 'N/A',
-        oficina_endereco: mecanicoResult?.rows[0]?.oficina_endereco || 'N/A',
-        mecanico_nome: mecanicoResult?.rows[0]?.mecanico_nome || 'N/A'
+        oficina_nome:
+          mecanicoResult?.rows[0]?.oficina_nome || "MOTRIX AUTO CENTER",
+        oficina_telefone: mecanicoResult?.rows[0]?.oficina_telefone || "N/A",
+        oficina_endereco: mecanicoResult?.rows[0]?.oficina_endereco || "N/A",
+        mecanico_nome: mecanicoResult?.rows[0]?.mecanico_nome || "N/A",
       };
 
       generateOrdemPDF(ordemCompleta, res);
     } catch (error: any) {
       res.status(404).json({ error: error.message });
     }
-  }
+  },
+
+  async getWhatsAppLink(req: AuthRequest, res: Response) {
+    try {
+      const id = parseInt(req.params.id as string);
+      const result = await ordemService.getLinkWhatsApp(id);
+      res.json(result);
+    } catch (error: any) {
+      const status =
+        error.message.includes("não encontrada") ||
+        error.message.includes("não encontrado")
+          ? 404
+          : 400;
+      res.status(status).json({ error: error.message });
+    }
+  },
 };
