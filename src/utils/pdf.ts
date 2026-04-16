@@ -125,6 +125,25 @@ export const generateOrdemPDF = (ordem: any, res: Response) => {
     doc.text(`Obs: ${ordem.observacoes}`, { align: "justify" });
   doc.moveDown(0.5);
 
+  // CANCELAMENTO
+  if (ordem.motivo_cancelamento) {
+    doc.moveDown(0.5);
+    const cancelY = doc.y;
+    doc
+      .rect(40, cancelY, 515, doc.currentLineHeight() * 3 + 14)
+      .fill("#FEE2E2");
+    doc
+      .fillColor("#991B1B")
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .text("MOTIVO DO CANCELAMENTO", 50, cancelY + 5);
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .text(ordem.motivo_cancelamento, 50, doc.y + 2, { width: 495 });
+    doc.fillColor("#000000").moveDown(1.5);
+  }
+
   // PEÇAS
   if (ordem.pecas?.length) {
     sectionTitle("PEÇAS UTILIZADAS");
