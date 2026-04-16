@@ -5,7 +5,11 @@ import {
   OrdemMaoObra,
 } from "./ordens.repository";
 import { pool } from "../../config/database";
-import { gerarMensagemWhatsApp, gerarLinkWhatsApp } from "../../utils/whatsapp";
+import {
+  gerarMensagemVeiculoPronto,
+  gerarMensagemOrcamento,
+  gerarLinkWhatsApp,
+} from "../../utils/whatsapp";
 
 const STATUS_VALIDOS = [
   "Aberta",
@@ -118,37 +122,75 @@ export const ordemService = {
     return { message: "Ordem de serviço excluída com sucesso" };
   },
 
-  async getLinkWhatsApp(
-    id: number,
-  ): Promise<{ link: string; mensagem: string }> {
+  async getLinkWhatsApp(id: number): Promise<{
+    link: string;
+    mensagem: string;
+    tipo: "finalizado" | "orcamento";
+  }> {
     const ordem = await ordemRepository.findById(id);
     if (!ordem) throw new Error("Ordem de serviço não encontrada");
-    if (ordem.status !== "Finalizada")
-      throw new Error("A ordem ainda não foi finalizada");
 
-    const [clienteResult, oficinaResult] = await Promise.all([
+    const statusPermitidos = ["Finalizada", "Aguardando Orçamento"];
+    if (!statusPermitidos.includes(ordem.status))
+      throw new Error("Status não permite envio de WhatsApp");
+
+    const [clienteResult, oficinaResult, veiculoResult] = await Promise.all([
       pool.query("SELECT nome, telefone FROM clientes WHERE id = $1", [
         ordem.cliente_id,
       ]),
       pool.query("SELECT endereco FROM oficinas LIMIT 1"),
+      pool.query("SELECT modelo FROM veiculos WHERE id = $1", [
+        ordem.veiculo_id,
+      ]),
     ]);
 
     const cliente = clienteResult.rows[0];
     const oficina = oficinaResult.rows[0];
+    const veiculo =
+      veiculoResult.rows[0]?.modelo || ordem.veiculo_descricao || "Veículo";
+    const placa = ordem.veiculo_placa || "S/P";
 
     if (!cliente) throw new Error("Cliente não encontrado");
     if (!cliente.telefone)
       throw new Error("Cliente não possui telefone cadastrado");
+
+    if (ordem.status === "Aguardando Orçamento") {
+      const pecas = await ordemRepository.findPecasByOrdemId(id);
+      const maoObra = await ordemRepository.findMaoObraByOrdemId(id);
+      if (!pecas.length && !maoObra.length)
+        throw new Error(
+          "Orçamento vazio: adicione peças ou mão de obra antes de enviar",
+        );
+
+      const mensagem = gerarMensagemOrcamento(
+        cliente.nome,
+        veiculo,
+        placa,
+        ordem.descricao_problema,
+        pecas,
+        maoObra,
+        ordem.total,
+      );
+      return {
+        link: gerarLinkWhatsApp(cliente.telefone, mensagem),
+        mensagem,
+        tipo: "orcamento",
+      };
+    }
+
     if (!oficina?.endereco)
       throw new Error("Endereço da oficina não cadastrado");
-
-    const mensagem = gerarMensagemWhatsApp(
+    const mensagem = gerarMensagemVeiculoPronto(
       cliente.nome,
+      veiculo,
+      placa,
       ordem.total,
       oficina.endereco,
     );
-    const link = gerarLinkWhatsApp(cliente.telefone, mensagem);
-
-    return { link, mensagem };
+    return {
+      link: gerarLinkWhatsApp(cliente.telefone, mensagem),
+      mensagem,
+      tipo: "finalizado",
+    };
   },
 };
