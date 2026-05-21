@@ -11,6 +11,8 @@ import {
   gerarLinkWhatsApp,
 } from "../../utils/whatsapp";
 
+// teste
+
 const STATUS_VALIDOS = [
   "Aberta",
   "Em Andamento",
